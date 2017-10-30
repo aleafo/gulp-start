@@ -47,7 +47,8 @@ var gulp            = require('gulp'),
     gulpif          = require('gulp-if'),
     sourcemaps      = require('gulp-sourcemaps'),
     watch           = require('gulp-watch'),
-    reload          = browserSync.reload;
+    reload          = browserSync.reload,
+    proxyMiddleware = require('http-proxy-middleware');
 
 var knownOptions = {
   default: {
@@ -99,15 +100,23 @@ gulp.task('default', function(){
     var dir = eval('('+options.dir+')') ;
 
     // 从这个项目的根目录启动服务器
+
     browserSync({
         server: {
             baseDir: dir.basedir + "/",
 
-            //将任何其他类型的请求替换为 get 请求，方便使用模态数据
-            middleware: function(req,res,next){
-              req.method = 'GET';
-              return next();
-            }
+            
+            middleware: [
+
+                //将请求跨域转发到后台，用于前后端联调环节启用
+                // proxyMiddleware(['/api'], {target: 'http://192.168.1.1:8089/static/mock', changeOrigin: true})
+
+                //将任何其他类型的请求替换为 get 请求，方便使用模态数据，用于前端开发环节
+                ,function(req,res,next){
+                    req.method = 'GET';
+                    return next();
+                }
+            ]
         }
     });
 
