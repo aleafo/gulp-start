@@ -31,7 +31,7 @@ www
 var yxsm = {
 
     //basedir 代表相对于 node_modules ，项目的目录，也是根目录
-    basedir : './www/', 
+    basedir : './', 
 
     // sass文件目录，相对于项目根目录
     sassdir : 'static/sass/',
@@ -43,6 +43,10 @@ var yxsm = {
 - 5. 定义好以上变量后，在命令行运行
 
 ```bash
-gulp --dir yxsm
+gulp
 ```
 即可启动项目，其中项目根目录默认为 index.html  如果没有建立该文件，可以手动输入文件名
+
+- 6. 与后台联调时，可直接修改配置文件中的 proxyOpt选项，并将 proxyMiddleWare的注释打开。
+
+  <strong>需要重启gulp生效</strong>

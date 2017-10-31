@@ -37,24 +37,24 @@ gulp --dir yxsm
 */
 
 //引入需要的js包，也就是我们上面安装的依赖插件，并赋值给变量
-var gulp            = require('gulp'),
-    sass            = require('gulp-sass'),
-    plumber         = require('gulp-plumber'),
-    browserSync     = require("browser-sync"),
-    autoprefixer    = require('gulp-autoprefixer'),
-    minimist        = require('minimist'),
-    changed         = require('gulp-changed'),
-    gulpif          = require('gulp-if'),
-    sourcemaps      = require('gulp-sourcemaps'),
-    watch           = require('gulp-watch'),
-    reload          = browserSync.reload,
+var gulp = require('gulp'),
+    sass = require('gulp-sass'),
+    plumber = require('gulp-plumber'),
+    browserSync = require("browser-sync"),
+    autoprefixer = require('gulp-autoprefixer'),
+    minimist = require('minimist'),
+    changed = require('gulp-changed'),
+    gulpif = require('gulp-if'),
+    sourcemaps = require('gulp-sourcemaps'),
+    watch = require('gulp-watch'),
+    reload = browserSync.reload,
     proxyMiddleware = require('http-proxy-middleware');
 
 var knownOptions = {
-  default: {
-       env: 'null', //默认参数为 开发环境  可以设置为 dev 或 product
-       dir: 'yxsm'
-    }  
+    default: {
+        env: 'null', //默认参数为 开发环境  可以设置为 dev 或 product
+        dir: 'yxsm'
+    }
 };
 
 var options = minimist(process.argv.slice(2), knownOptions);
@@ -65,54 +65,63 @@ yxsm 通用模块部分
 +++++++++++++++++++++++++++++++++++++++++
 */
 var yxsm = {
-    basedir : './',   //配置项目目录
-    sassdir : 'static/sass/',  //相对项目目录的sass文件目录，会自动输出同名文件到 cssdir
-    cssdir  : 'static/css/'   //sass编译的css保存目录
+    basedir: './',   //配置项目目录
+    sassdir: 'static/sass/',  //相对项目目录的sass文件目录，会自动输出同名文件到 cssdir
+    cssdir: 'static/css/'   //sass编译的css保存目录
 }
 
 
-gulp.task('sassfile',function() {
-    var dir = eval('('+options.dir+')') ;
+gulp.task('sassfile', function () {
+    var dir = eval('(' + options.dir + ')');
     gulp.src(dir.basedir + dir.sassdir + '*.scss')
 
         //开发环境生成map
-        .pipe( gulpif( options.env === 'dev', sourcemaps.init() ) )
+        .pipe(gulpif(options.env === 'dev', sourcemaps.init()))
 
         .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer({
             // browsers: ['last 2 versions','IE 9-11','Chrome >= 37'],
             cascade: true, //是否美化属性值 默认：true
-            remove:true //是否去掉不必要的前缀 默认：true
+            remove: true //是否去掉不必要的前缀 默认：true
         }))
 
         //开发环境生成map 写入
-        .pipe(  gulpif( options.env === 'dev', sourcemaps.write() )  )
+        .pipe(gulpif(options.env === 'dev', sourcemaps.write()))
 
         .pipe(gulp.dest(dir.basedir + dir.cssdir))
-        .pipe(reload({stream:true}));
+        .pipe(reload({ stream: true }));
 });
 
 
 //设置defautl命令, 用来让gulp监听对应文件的变动，一旦发现变动立即执行对应任务
-gulp.task('default', function(){
+gulp.task('default', function () {
 
-    var dir = eval('('+options.dir+')') ;
 
-    // 从这个项目的根目录启动服务器
+    // 获取options 默认 yxsm，可通过命令行 --dir 目录名 传参
+    var dir = eval('(' + options.dir + ')');
+
+    var proxyOpt = {
+        target: 'http://localhost:3000/',
+        changeOrigin: true,
+        pathRewrite: {
+            '^/api/json': '/static/json',
+        }
+    };
 
     browserSync({
         server: {
-            baseDir: dir.basedir + "/",
 
-            
+            // 从这个项目的根目录启动服务器
+            baseDir: dir.basedir + "./",
+
             middleware: [
 
-                //将请求跨域转发到后台，用于前后端联调环节启用
-                // proxyMiddleware(['/api'], {target: 'http://192.168.1.1:8089/static/mock', changeOrigin: true})
+                // 将请求跨域转发到后台，用于前后端联调环节启用
+                // proxyMiddleware(['/api'], proxyOpt),
 
-                //将任何其他类型的请求替换为 get 请求，方便使用模态数据，用于前端开发环节
-                ,function(req,res,next){
+                // 将任何其他类型的请求替换为 get 请求，方便使用模态数据，用于前端开发环节
+                function (req, res, next) {
                     req.method = 'GET';
                     return next();
                 }
@@ -120,12 +129,12 @@ gulp.task('default', function(){
         }
     });
 
-    //watch 模块 替换原来的 gulp.watch 对任何新增的 或删除的 文件 也能监听到
-    watch(dir.basedir + dir.sassdir + '**/*.scss', function(){
+    // watch 模块 替换原来的 gulp.watch 对任何新增的 或删除的 文件 也能监听到
+    watch(dir.basedir + dir.sassdir + '**/*.scss', function () {
         gulp.run(['sassfile']);
     });
 
-    watch(dir.basedir + '**/*.html', function(file){
+    watch(dir.basedir + '**/*.html', function (file) {
         browserSync.reload();
     });
 
